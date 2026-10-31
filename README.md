@@ -34,6 +34,12 @@ volumes:
 docker compose up -d
 ```
 
+手动触发 GitHub Actions（workflow_dispatch）后，镜像发布在 ghcr.io，也可直接使用：
+
+```shell
+docker pull ghcr.io/adaier1/videoanalysis
+```
+
 - 访问 http://127.0.0.1:8000/ ，首次会跳转登录页。
 - 默认凭据为 `admin` / `admin123`，登录后请在设置页修改；凭据与 API Key 持久化在 `parse_video_data` 卷（容器内 `/app/data`）。
 - 公网部署请务必修改默认凭据。

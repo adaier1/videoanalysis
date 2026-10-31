@@ -3,6 +3,10 @@ name: Build Docker Image
 on:
   workflow_dispatch
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     name: Build Docker Image
@@ -12,18 +16,12 @@ jobs:
       - name: Checkout Github Code
         uses: actions/checkout@v4
 
-      - name: Check Docker Hub secrets
-        run: |
-          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]; then
-            echo "::error::请先在仓库 Settings → Secrets and variables → Actions 中配置 DOCKERHUB_USERNAME 和 DOCKERHUB_PASSWORD"
-            exit 1
-          fi
-
-      - name: Login to Docker Hub
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -34,6 +32,6 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/parse-video-py:latest
+          tags: ghcr.io/${{ github.repository }}:latest
           platforms: |
             linux/amd64
