@@ -4,28 +4,31 @@
 
 ## 快速部署（Docker Compose）
 
-`docker-compose.yml`（不使用 env 变量，直接构建运行）：
+`docker-compose.yml`（不使用 env 变量，镜像来自 ghcr.io）：
 
 ```yaml
 services:
-  parse-video:
-    build: .
-    image: parse-video-py:local
-    container_name: parse-video-py
+  videoanalysis:
+    image: ghcr.io/adaier1/videoanalysis:latest
+    container_name: videoanalysis
     restart: unless-stopped
+
     ports:
       - "8000:8000"
+
+    volumes:
+      - /volume1/docker/videoanalysis/data:/app/data
+
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)"]
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)"
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
-    volumes:
-      - parse_video_data:/app/data
-
-volumes:
-  parse_video_data:
 ```
 
 启动：
@@ -41,7 +44,7 @@ docker pull ghcr.io/adaier1/videoanalysis
 ```
 
 - 访问 http://127.0.0.1:8000/ ，首次会跳转登录页。
-- 默认凭据为 `admin` / `admin123`，登录后请在设置页修改；凭据与 API Key 持久化在 `parse_video_data` 卷（容器内 `/app/data`）。
+- 默认凭据为 `admin` / `admin123`，登录后请在设置页修改；凭据与 API Key 持久化在挂载目录（宿主 `/volume1/docker/videoanalysis/data` → 容器 `/app/data`）。
 - 公网部署请务必修改默认凭据。
 
 ## API
