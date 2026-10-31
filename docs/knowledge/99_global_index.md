@@ -14,6 +14,7 @@ last_scanned_at: 2026-06-08
 | 新增 API 接口 | 02_project_map.md、03_core_flows.md、04_code_rules.md | 06_build_run_deploy.md | 确认路由和响应格式 |
 | 修复 Bug | 02_project_map.md、03_core_flows.md、06_build_run_deploy.md | 05_change_safety.md | 先复现问题 |
 | 修改鉴权 | 03_core_flows.md、05_change_safety.md | 04_code_rules.md | 注意时序安全 |
+| iOS 快捷指令 API / Key 管理 | 02_project_map.md、03_core_flows.md | 05_change_safety.md、06_build_run_deploy.md | Key 校验保持 `secrets.compare_digest()`；不重复实现解析 |
 | 修改 CLI | 02_project_map.md、03_core_flows.md、04_code_rules.md | 06_build_run_deploy.md | 注意向后兼容 |
 | 代理相关 | 06_build_run_deploy.md（含免费代理获取和测试方法） | 02_project_map.md | 仅测试用免费代理 |
 | 部署上线 | 06_build_run_deploy.md | 05_change_safety.md | 不要猜命令 |
@@ -53,7 +54,8 @@ last_scanned_at: 2026-06-08
 | `parser/__init__.py:parse_video_share_url()` | 分享链接解析入口 | 核心业务流程 | 高 |
 | `parser/__init__.py:parse_video_id()` | 视频 ID 解析入口 | 核心业务流程 | 高 |
 | `web.py:app` | FastAPI 应用实例 | Web 服务 | 高 |
-| `web.py:_build_auth_dependency()` | Basic Auth 动态构建 | 鉴权 | 高 |
+| `web.py:require_login()` | 登录鉴权依赖（会话 Cookie 或 Basic Auth） | 登录鉴权 | 高 |
+| `auth_store.py` | 登录凭据 JSON 持久化（默认 admin/admin123）+ 内存会话管理 | 登录鉴权 | 高 |
 | `utils.py:extract_url()` | URL 提取正则匹配 | 所有解析入口 | 中 |
 | `utils.py:create_async_client()` | HTTP 客户端工厂（代理注入） | 所有解析器 HTTP 请求 | 高 |
 | `cli/_parse.py:run_parse()` | CLI 解析命令入口 | CLI 批量解析 | 中 |
@@ -62,8 +64,8 @@ last_scanned_at: 2026-06-08
 
 | 配置项 | 用途 | 使用位置 | 修改风险 |
 |---|---|---|---|
-| `PARSE_VIDEO_USERNAME` | Basic Auth 用户名 | `web.py:34` | 中（需重启服务） |
-| `PARSE_VIDEO_PASSWORD` | Basic Auth 密码 | `web.py:35` | 中（需重启服务） |
+| `PARSE_VIDEO_USERNAME` | 登录账号初始值（凭据文件缺失时生效；可运行时在设置页修改） | `auth_store.py` | 低 |
+| `PARSE_VIDEO_PASSWORD` | 登录密码初始值（凭据文件缺失时生效；可运行时在设置页修改） | `auth_store.py` | 低 |
 | `PARSE_VIDEO_PROXY` | HTTP/HTTPS 代理地址 | `utils.py:create_async_client()` | 中（需重启服务） |
 | `pyproject.toml:dependencies` | 核心依赖声明 | 构建安装 | 中 |
 | `pyproject.toml:project.scripts` | CLI 入口点 | CLI 安装 | 中 |

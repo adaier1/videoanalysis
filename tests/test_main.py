@@ -2,18 +2,21 @@ from fastapi.testclient import TestClient
 
 from parse_video_py.web import app
 
+AUTH = ("admin", "admin123")
 client = TestClient(app)
 
 
 def test_share_url_parse_returns_400_when_no_url_found():
-    response = client.get("/video/share/url/parse", params={"url": "这不是链接"})
+    response = client.get(
+        "/video/share/url/parse", params={"url": "这不是链接"}, auth=AUTH
+    )
 
     assert response.status_code == 200
     assert response.json() == {"code": 400, "msg": "未检测到有效的分享链接"}
 
 
 def test_share_url_parse_returns_400_for_empty_string():
-    response = client.get("/video/share/url/parse", params={"url": ""})
+    response = client.get("/video/share/url/parse", params={"url": ""}, auth=AUTH)
 
     assert response.status_code == 200
     assert response.json() == {"code": 400, "msg": "未检测到有效的分享链接"}
@@ -21,7 +24,7 @@ def test_share_url_parse_returns_400_for_empty_string():
 
 def test_share_url_parse_returns_400_for_partial_url_without_scheme():
     response = client.get(
-        "/video/share/url/parse", params={"url": "example.com/video/123"}
+        "/video/share/url/parse", params={"url": "example.com/video/123"}, auth=AUTH
     )
 
     assert response.status_code == 200
@@ -29,6 +32,6 @@ def test_share_url_parse_returns_400_for_partial_url_without_scheme():
 
 
 def test_share_url_parse_returns_422_when_url_param_missing():
-    response = client.get("/video/share/url/parse")
+    response = client.get("/video/share/url/parse", auth=AUTH)
 
     assert response.status_code == 422

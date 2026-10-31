@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E7C66'/%3E%3Cpath d='M26 20l18 12-18 12z' fill='%23ffffff'/%3E%3C/svg%3E">
+<style>
+:root{
+  --canvas:#F6F6F4;--surface:#FFFFFF;--surface-2:#FBFBFA;
+  --ink:#1A1C1E;--ink-2:#5A6169;--ink-3:#9CA3AC;
+  --line:#E7E7E2;--line-strong:#D8D8D2;
+  --accent:#0E7C66;--accent-strong:#0A5C4C;--on-accent:#FFFFFF;--tint:#EAF4F1;
+  --ok:#2E7D46;--bad:#C0392B;
+  --radius:14px;--radius-s:10px;
+  --shadow:0 1px 2px rgba(24,28,32,.05),0 12px 32px rgba(24,28,32,.06);
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --canvas:#121417;--surface:#181A1E;--surface-2:#1D2025;
+  --ink:#ECEEF1;--ink-2:#A9AFB8;--ink-3:#6B7280;
+  --line:#272A30;--line-strong:#33373E;
+  --accent:#3EC9A8;--accent-strong:#66DCC0;--on-accent:#0B1F1A;--tint:#14302A;
+  --ok:#4CB26A;--bad:#E2644F;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--canvas);color:var(--ink);font:15px/1.65 var(--sans);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{width:min(400px,100%);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.logo{width:40px;height:40px;flex:none;border-radius:11px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.brand h1{font-size:17px;font-weight:650;letter-spacing:-.2px;line-height:1.25}
+.brand .sub{font-size:12px;color:var(--ink-3);margin-top:2px}
+.form-field{margin-bottom:13px}
+.form-field label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.text-input{width:100%;height:44px;padding:0 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-s);font-size:15px;color:var(--ink);transition:border-color .18s ease,background .18s ease}
+.text-input:focus{outline:none;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--tint)}
+.err-box{margin-bottom:14px;font-size:13.5px;color:var(--bad);background:color-mix(in srgb,var(--bad) 7%,transparent);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent);border-radius:var(--radius-s);padding:10px 12px;line-height:1.55}
+.primary-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:42px;padding:0 18px;border-radius:var(--radius-s);font-size:14px;font-weight:600;background:var(--accent);color:var(--on-accent);border:1px solid transparent;transition:background .18s ease}
+.primary-btn:hover{background:var(--accent-strong)}
+.hint{font-size:12.5px;color:var(--ink-3);margin-top:14px;text-align:center}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 64 64" fill="none"><path d="M22 16l26 16-26 16z" fill="currentColor"/></svg>
+    </span>
+    <div>
+      <h1>登录 · 视频解析控制台</h1>
+      <p class="sub">parse-video-py</p>
+    </div>
+  </div>
+  {% if error %}
+  <div class="err-box" role="alert">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/login">
+    <div class="form-field">
+      <label for="username">账号名称</label>
+      <input class="text-input" id="username" name="username" type="text" autocomplete="username" required>
+    </div>
+    <div class="form-field">
+      <label for="password">密码</label>
+      <input class="text-input" id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="primary-btn" type="submit">登录</button>
+  </form>
+  <p class="hint">默认账号 admin / admin123，登录后请在「设置」中修改</p>
+</main>
+<script>
+'use strict';
+var t=localStorage.getItem('pv_theme');
+var eff=(t==='light'||t==='dark')?t:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');
+document.documentElement.setAttribute('data-theme',eff);
+</script>
+</body>
+</html>

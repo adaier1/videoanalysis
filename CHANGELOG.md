@@ -2,6 +2,16 @@
 
 所有重要变更均会记录在此文件中。
 
+## [Unreleased] - 2026-11-01
+
+### 新增功能
+
+- **WebUI 登录功能**：打开网页需登录，默认账号 `admin` / `admin123`；登录页 `templates/login.html`，会话 HttpOnly Cookie（7 天）
+- **设置页修改账号名称与密码**：`GET/POST /api/settings/credentials`，凭据持久化到 `data/credentials.json`，保存后全部会话失效需重新登录；新增退出登录（`POST /logout`）
+- **凭据存储模块 `auth_store.py`**：凭据文件优先，环境变量 `PARSE_VIDEO_USERNAME`/`PARSE_VIDEO_PASSWORD` 仅作为文件缺失时的初始值；校验保持 `secrets.compare_digest()`
+- **Basic Auth 兼容**：API 客户端仍可用账号名称/密码作为 Basic 凭据；`/healthz` 不受登录影响
+- **新增测试** `tests/test_auth.py`（登录/会话/凭据修改/登出），既有测试同步加鉴权；`.gitignore` 排除含凭据的 `data/` 目录
+
 ## [v0.0.3] - 2026-04-19
 
 ### 新增功能

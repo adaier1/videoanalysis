@@ -16,5 +16,8 @@ RUN uv pip install --system ".[all]"
 # 暴露端口
 EXPOSE 8000
 
+# 健康检查（/healthz 不受 Basic Auth 影响）
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)"
+
 # 启动 FastAPI 应用
 CMD ["uvicorn", "parse_video_py.web:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,148 +1,53 @@
-   * [支持平台](#支持平台)
-   * [安装](#安装)
-   * [Docker](#docker)
-   * [依赖模块](#依赖模块)
+# Video Analysis（视频去水印解析 · WebUI + Docker）
 
-Python短视频去水印, 视频目前支持25个平台, 图集目前支持5个平台, 欢迎各位Star。
-> 💡tips
-> 1. 出现解析失败可在 issue 中提问，请提供可用于复现的平台信息、分享链接.
-> 2. 使用时, 请尽量使用app分享链接, 电脑网页版未做充分测试.
+本项目基于 [wujunwei928/parse-video-py](https://github.com/wujunwei928/parse-video-py) 改造，核心解析能力沿用原项目。本地新增：Docker 部署、深色 WebUI 控制面板（分享链接 / 视频 ID 双标签解析、结果卡片、视频/音频/封面下载、图集与 ZIP 打包）、登录鉴权与 API Key、健康检查。**许可证沿用原参考项目（MIT，见 LICENSE）**。
 
-# 其他语言版本
-- [Golang版本](https://github.com/wujunwei928/parse-video)
+## 快速部署（Docker Compose）
 
----
+`docker-compose.yml`（不使用 env 变量，直接构建运行）：
 
-# MCP 支持
-本项目现已支持 [MCP (Model Context Protocol)](https://modelcontextprotocol.io/)，提供StreamableHttp方式接入， 接入URL： http://localhost:8000/mcp
+```yaml
+services:
+  parse-video:
+    build: .
+    image: parse-video-py:local
+    container_name: parse-video-py
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - parse_video_data:/app/data
 
-# 支持平台
-## 图集
-| 平台 | 状态 |
-|----|----|
-| 抖音 | ✔  |
-| 快手 | ✔  |
-| 小红书 | ✔  |
-| 皮皮虾 | ✔  |
-| 微博 | ✔  |
+volumes:
+  parse_video_data:
+```
 
-## 图集 LivePhoto
-| 平台 | 状态 |
-|----|----|
-| 小红书 | ✔  |
-| 抖音 | ✔  |
+启动：
 
-## 视频
-| 平台       | 状态 |
-|----------|----|
-| 小红书      | ✔  |
-| 皮皮虾      | ✔  |
-| 抖音短视频    | ✔  |
-| 火山短视频    | ✔  |
-| 皮皮搞笑     | ✔  |
-| 快手短视频    | ✔  |
-| 微视短视频    | ✔  |
-| 西瓜视频     | ✔  |
-| 最右       | ✔  |
-| 梨视频      | ✔  |
-| 度小视(原全民) | ✔  |
-| 逗拍       | ✔  |
-| 微博       | ✔  |
-| 绿洲       | ✔  |
-| 全民K歌     | ✔  |
-| 6间房      | ✔  |
-| 美拍       | ✔  |
-| 新片场      | ✔  |
-| 好看视频     | ✔  |
-| 虎牙       | ✔  |
-| AcFun    | ✔  |
-| 央视网     | ✔  |
-| 搜狐视频    | ✔  |
-| 哔哩哔哩	| ✔  |
-| 腾讯视频    | ✔  |
-| Twitter/X	| ✔  |
-
-# 运行
-
-## 本地运行
-
-### 使用 uv（推荐）
 ```shell
-# 进入项目根目录
-cd parse-video-py
-
-# 创建虚拟环境并安装全部依赖
-uv venv && uv pip install -e ".[all]"
-
-# 激活虚拟环境
-source .venv/bin/activate
+docker compose up -d
 ```
 
-### CLI 命令行
+- 访问 http://127.0.0.1:8000/ ，首次会跳转登录页。
+- 默认凭据为 `admin` / `admin123`，登录后请在设置页修改；凭据与 API Key 持久化在 `parse_video_data` 卷（容器内 `/app/data`）。
+- 公网部署请务必修改默认凭据。
+
+## API
+
+解析接口（需登录，支持会话或 Basic Auth；`/healthz` 不受鉴权影响）：
+
 ```shell
-# 安装
-uv pip install -e ".[all]"
-
-# 解析视频
-parse-video-py parse "https://v.douyin.com/xxx"
-parse-video-py parse "https://v.douyin.com/xxx" --format json
-
-# 启动 Web 服务
-parse-video-py serve --port 8000
-
-# 查看版本
-parse-video-py version
+curl -u 'admin:your_password' 'http://127.0.0.1:8000/video/share/url/parse?url=视频分享链接' | jq
 ```
 
-### 如需开启basic auth认证，请自行设置环境变量，不设置不开启，默认不开启
-```shell
-export PARSE_VIDEO_USERNAME=username
-export PARSE_VIDEO_PASSWORD=password
-```
+返回格式：
 
-### 如需设置代理，请设置环境变量（不设置则直连）
-```shell
-# 无认证代理
-export PARSE_VIDEO_PROXY=http://proxy.example.com:端口
-
-# 有认证代理
-export PARSE_VIDEO_PROXY=http://user:pass@proxy.example.com:端口
-```
-
-### 运行app
-```shell
-uvicorn parse_video_py.web:app --reload
-```
-
-## Docker运行
-### 获取 docker image
-```bash
-docker pull wujunwei928/parse-video-py
-```
-
-### 运行 docker 容器, 端口 8000
-```bash
-docker run -d -p 8000:8000 wujunwei928/parse-video-py
-```
-
-### 运行docker容器，开启basic auth认证
-```bash
-docker run -d -p 8000:8000 -e PARSE_VIDEO_USERNAME=username -e PARSE_VIDEO_PASSWORD=password wujunwei928/parse-video-py
-```
-
-### 运行docker容器，设置代理
-```bash
-docker run -d -p 8000:8000 -e PARSE_VIDEO_PROXY=http://proxy.example.com:端口 wujunwei928/parse-video-py
-```
-
-# 查看前端页面
-访问: http://127.0.0.1:8000/
-
-请求接口, 查看json返回
-```bash
-curl 'http://127.0.0.1:8000/video/share/url/parse?url=视频分享链接' | jq
-```
-返回格式
 ```json
 {
   "author": {
@@ -156,9 +61,10 @@ curl 'http://127.0.0.1:8000/video/share/url/parse?url=视频分享链接' | jq
   "cover_url": "https://zzz"
 }
 ```
+
 | 字段名 | 说明 |
 | ---- | ---- |
-| author.uid | 视频作者id |
+| author.uid | 视频作者 id |
 | author.name | 视频作者名称 |
 | author.avatar | 视频作者头像 |
 | title | 视频标题 |
@@ -168,43 +74,49 @@ curl 'http://127.0.0.1:8000/video/share/url/parse?url=视频分享链接' | jq
 | images | 图集图片列表 |
 | images.[index].url | 图集图片地址 |
 | images.[index].live_photo_url | 图集图片 livephoto 视频地址 |
-> 字段除了视频地址, 其他字段可能为空
 
-# 自己写方法调用
-```python
-import json
-import asyncio
+> 除视频地址外，其他字段可能为空。
 
-from parse_video_py import parse_video_share_url, parse_video_id, VideoSource
+另提供 `/api/shortcut/parse`（带 API Key 的快捷解析）与 Key 管理接口。
 
-# 根据分享链接解析
-video_info = asyncio.run(parse_video_share_url("分享链接"))
-print(
-    "解析分享链接：\n",
-    json.dumps(video_info, ensure_ascii=False, indent=4, default=lambda x: x.__dict__),
-    "\n",
-)
+## MCP 支持
 
-# 根据视频id解析
-video_info = asyncio.run(
-    parse_video_id(VideoSource.DouYin, "视频ID")
-)
-print(
-    "解析视频ID：\n",
-    json.dumps(video_info, ensure_ascii=False, indent=4, default=lambda x: x.__dict__),
-    "\n",
-)
+沿用原项目的 MCP 能力，StreamableHttp 接入 URL：`http://localhost:8000/mcp`
+
+## 本地运行
+
+```shell
+uv venv && uv pip install -e ".[all]"
+uvicorn parse_video_py.web:app --reload
 ```
 
+CLI：
 
-# 依赖模块
-| 模块        | 作用                                   |
-|-------------|--------------------------------------|
-| fastapi     | web框架                                |
-| fastapi-mcp | 支持MCP                                |
-| httpx       | HTTP 和 REST 客户端                      |
-| parsel      | 解析html页面                             |
-| pre-commit  | 对git代码提交前进行检查，结合flake8，isort，black使用 |
-| flake8      | 工程化：代码风格一致性                          |
-| isort       | 工程化：格式化导入package                     |
-| black       | 工程化：代码格式化                            |
+```shell
+parse-video-py parse "https://v.douyin.com/xxx" --format json
+parse-video-py serve --port 8000
+```
+
+## 支持平台（沿用原项目）
+
+### 图集
+
+| 平台 | 状态 |
+|----|----|
+| 抖音 | ✔ |
+| 快手 | ✔ |
+| 小红书 | ✔ |
+| 皮皮虾 | ✔ |
+| 微博 | ✔ |
+
+LivePhoto：小红书、抖音。
+
+### 视频
+
+小红书、皮皮虾、抖音短视频、火山短视频、皮皮搞笑、快手短视频、微视短视频、西瓜视频、最右、梨视频、度小视(原全民)、逗拍、微博、绿洲、全民K歌、6间房、美拍、新片场、好看视频、虎牙、AcFun、央视网、搜狐视频、哔哩哔哩、腾讯视频、Twitter/X。
+
+> tips：出现解析失败可在 issue 中提问，并提供可复现的平台信息与分享链接；尽量使用 App 分享链接，网页版未做充分测试。
+
+## 许可
+
+MIT，沿用原参考项目 parse-video-py。

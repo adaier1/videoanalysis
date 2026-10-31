@@ -18,9 +18,10 @@ source_commit: dd55df3
 
 | 变量 | 用途 | 是否敏感 | 默认值/示例 | 使用位置 | 证据来源 |
 |---|---|---|---|---|---|
-| `PARSE_VIDEO_USERNAME` | Basic Auth 用户名 | 是 | 不设置=不开启 | `web.py:34` | `web.py:34` |
-| `PARSE_VIDEO_PASSWORD` | Basic Auth 密码 | 是 | 不设置=不开启 | `web.py:35` | `web.py:35` |
+| `PARSE_VIDEO_USERNAME` | 登录账号初始值（仅当凭据文件不存在时生效） | 是 | 不设置=默认 `admin` | `auth_store.py` | `.env.example` |
+| `PARSE_VIDEO_PASSWORD` | 登录密码初始值（仅当凭据文件不存在时生效） | 是 | 不设置=默认 `admin123` | `auth_store.py` | `.env.example` |
 | `PARSE_VIDEO_PROXY` | HTTP/HTTPS 代理地址 | 是 | 不设置=直连 | `utils.py:create_async_client()` | `utils.py` |
+| `PARSE_VIDEO_DATA_DIR` | `api_keys.json` / `credentials.json` 存储目录 | 否 | `data`（容器内 `/app/data`，named volume 持久化） | `key_store.py`、`auth_store.py` | `.env.example` |
 
 ## 安装依赖
 
@@ -97,6 +98,9 @@ docker build -t parse-video-py .
 
 - Dockerfile：`python:3.10-slim` + uv 安装依赖
 - 暴露端口：8000
+- 健康检查：`HEALTHCHECK` 访问 `/healthz`（不受登录影响）
+- Compose：`docker compose up -d`，宿主端口由 `PARSE_VIDEO_PORT` 控制（默认 8000），登录凭据初始值/代理从 `.env` 注入；`PARSE_VIDEO_PORT` 须在运行 compose 的同一 shell 或 `.env` 中设置
+- 持久卷：named volume `parse_video_data` 挂载到 `/app/data`（存放 `api_keys.json` 与 `credentials.json`），容器重建后 Key 与登录凭据保留；会话仅存内存，重启后需重新登录
 - 启动命令：`uvicorn parse_video_py.web:app --host 0.0.0.0 --port 8000`
 - CI/CD：GitHub Actions 自动构建推送到 Docker Hub（`docker.yml`）
 - 镜像：`wujunwei928/parse-video-py:latest`
@@ -110,7 +114,7 @@ docker build -t parse-video-py .
 
 ## 数据库初始化/迁移
 
-当前项目无数据库，不需要初始化或迁移。
+当前项目无数据库，不需要初始化或迁移。API Key 存储为 JSON 文件（named volume 持久化），首次访问 Key 接口时自动生成，无迁移步骤。
 
 ## 常见问题
 

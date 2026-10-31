@@ -91,6 +91,9 @@ class VideoInfo:
     # 视频作者信息
     author: VideoAuthor = dataclasses.field(default_factory=VideoAuthor)
 
+    # 下载所需的额外请求头（防盗链、临时 Token、Referer 等），由解析器按需填充
+    headers: Dict[str, str] = dataclasses.field(default_factory=dict)
+
 
 class BaseParser(ABC):
     @staticmethod

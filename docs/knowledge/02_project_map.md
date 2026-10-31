@@ -34,9 +34,11 @@ confidence: high
 | `main.py` | Web 服务启动入口 | 是 | `main.py:1-6` |
 | `src/parse_video_py/` | 主包源码 | 是 | `pyproject.toml:packages` |
 | `src/parse_video_py/parser/` | 26 个平台解析器 + BaseParser + 路由映射 | 是 | `src/parse_video_py/parser/__init__.py` |
-| `src/parse_video_py/web.py` | FastAPI 应用、路由、Basic Auth | 是 | `src/parse_video_py/web.py` |
+| `src/parse_video_py/web.py` | FastAPI 应用、路由、登录鉴权（会话 + Basic Auth 兼容） | 是 | `src/parse_video_py/web.py` |
 | `src/parse_video_py/cli/` | CLI 命令行工具 | 是 | `src/parse_video_py/cli/__init__.py` |
 | `src/parse_video_py/utils.py` | URL 提取、query 参数解析工具 | 是 | `src/parse_video_py/utils.py` |
+| `src/parse_video_py/key_store.py` | API Key JSON 持久化存储（按用户隔离） | 是 | `src/parse_video_py/key_store.py` |
+| `src/parse_video_py/auth_store.py` | 登录凭据 JSON 持久化（默认 admin/admin123）+ 内存会话管理 | 是 | `src/parse_video_py/auth_store.py` |
 | `src/parse_video_py/templates/` | Jinja2 HTML 模板 | 否 | `src/parse_video_py/templates/` |
 | `tests/` | 测试用例 | 否 | `tests/` |
 | `docs/` | 文档（agents 配置等） | 否 | `docs/` |
@@ -57,11 +59,13 @@ confidence: high
 |---|---|---|---|---|---|
 | BaseParser | `parser/base.py` | 定义解析器抽象基类、数据结构、VideoSource 枚举 | 所有解析器 | **高** | `parser/base.py` |
 | 解析器路由 | `parser/__init__.py` | VideoSource→域名→解析器映射、`parse_video_share_url()`、`parse_video_id()` | web.py、cli | **高** | `parser/__init__.py:29-193` |
-| Web 应用 | `web.py` | FastAPI 路由、Basic Auth、MCP 挂载 | uvicorn | **高** | `web.py` |
+| Web 应用 | `web.py` | FastAPI 路由、登录鉴权（会话 Cookie + Basic Auth 兼容）、MCP 挂载 | uvicorn | **高** | `web.py` |
 | CLI 入口 | `cli/__init__.py` | Typer 命令注册（parse/serve/version） | pyproject.toml scripts | 中 | `cli/__init__.py` |
 | CLI 解析逻辑 | `cli/_parse.py` | 解析命令核心逻辑、批量解析、并发控制 | cli/__init__.py | 中 | `cli/_parse.py` |
 | CLI 输出 | `cli/output.py` | 结果格式化（text/json） | cli/_parse.py | 低 | `cli/output.py` |
 | 工具函数 | `utils.py` | URL 提取、query 参数解析、HTTP 客户端工厂 | web.py、cli/_parse.py、所有解析器 | **高** | `utils.py` |
+| API Key 存储 | `key_store.py` | JSON 文件读写、Key 生成/重置/校验（`secrets.compare_digest`） | web.py | 中 | `key_store.py` |
+| 登录凭据/会话存储 | `auth_store.py` | 凭据 JSON 读写、`secrets.compare_digest` 校验、内存会话创建/失效 | web.py | **高** | `auth_store.py` |
 | 26 个解析器 | `parser/*.py` | 各平台视频/图集解析 | parser/__init__.py 路由 | 中 | `parser/` |
 
 ## 外部依赖
@@ -78,27 +82,43 @@ confidence: high
 
 ## 数据存储
 
-当前项目未发现数据库相关代码。解析结果为无状态的即时返回，不持久化存储。
+项目无数据库。解析结果仍为无状态即时返回；持久化文件都在 `PARSE_VIDEO_DATA_DIR`（默认 `data/`，容器内由 named volume `parse_video_data` 持久化到 `/app/data`）：
+
+- `key_store.py` → `api_keys.json`：API Key 按用户（owner）隔离，重置后旧 Key 立即失效
+- `auth_store.py` → `credentials.json`：登录账号名称与密码（默认 admin/admin123，设置页修改）；会话为进程内存，重启后失效
 
 - 已检查路径：`src/`、`tests/`、`requirements.txt`、`pyproject.toml`
-- 证据：无 migration、无 ORM、无数据库连接配置
+- 证据：无 migration、无 ORM、无数据库连接配置；Key 与凭据存储为 JSON 文件
+
+> 注意：`data/credentials.json` 含凭据，发布到 GitHub 前必须核查排除（`.gitignore` 已排除 `data/`）。
 
 ## API 路由
 
 | 方法 | 路径 | 功能 | Handler | 证据来源 |
 |---|---|---|---|---|
-| GET | `/` | Web 界面 | `web.py:read_item` | `web.py:64` |
+| GET | `/` | Web 界面（未登录时重定向到 `/login`） | `web.py:read_item` | `web.py` |
+| GET | `/login` | 登录页 | `web.py:login_page` | `web.py` |
+| POST | `/login` | 登录表单（成功创建会话并写 Cookie） | `web.py:login_submit` | `web.py` |
+| POST | `/logout` | 退出登录（清除会话与 Cookie） | `web.py:logout` | `web.py` |
+| GET | `/healthz` | 容器健康检查（不受登录影响） | `web.py:healthz` | `web.py` |
 | GET | `/video/share/url/parse` | 分享链接解析 | `web.py:share_url_parse` | `web.py:75` |
 | GET | `/video/id/parse` | 视频 ID 解析 | `web.py:video_id_parse` | `web.py:98` |
+| GET/POST | `/api/shortcut/parse` | iOS 快捷指令解析（GET `?key&url` 或 POST `{key,url}`，返回 download_url+headers，仅 Key 鉴权） | `web.py:_shortcut_parse`（`shortcut_parse`/`shortcut_parse_get`） | `tests/test_shortcut_api.py` |
+| GET | `/api/shortcut/key` | 查看/自动生成当前登录用户 API Key（受登录保护） | `web.py:get_shortcut_key` | `web.py` |
+| POST | `/api/shortcut/key/reset` | 重置 API Key（旧 Key 立即失效，受登录保护） | `web.py:reset_shortcut_key` | `web.py` |
+| GET | `/api/settings/credentials` | 查看当前登录账号名称（受登录保护） | `web.py:get_credentials` | `web.py` |
+| POST | `/api/settings/credentials` | 修改账号名称与密码（受登录保护，成功后全部会话失效） | `web.py:set_credentials` | `web.py` |
 | MCP | `/mcp` | AI 工具集成 | FastApiMCP 自动注册 | `web.py:26-27,114` |
 
 ## 环境变量
 
 | 变量 | 用途 | 是否敏感 | 默认值 | 使用位置 | 证据来源 |
 |---|---|---|---|---|---|
-| `PARSE_VIDEO_USERNAME` | Basic Auth 用户名 | 是 | 未设置=不开启 | `web.py:34` | `web.py:34` |
-| `PARSE_VIDEO_PASSWORD` | Basic Auth 密码 | 是 | 未设置=不开启 | `web.py:35` | `web.py:35` |
+| `PARSE_VIDEO_USERNAME` | 登录账号初始值（仅当 `credentials.json` 不存在时生效） | 是 | 未设置=用默认 `admin` | `auth_store.py:load_credentials()` | `auth_store.py` |
+| `PARSE_VIDEO_PASSWORD` | 登录密码初始值（仅当 `credentials.json` 不存在时生效） | 是 | 未设置=用默认 `admin123` | `auth_store.py:load_credentials()` | `auth_store.py` |
 | `PARSE_VIDEO_PROXY` | HTTP 代理地址 | 是 | 未设置=不使用代理，格式：`http://[user:pass@]host:port` | `utils.py:create_async_client()` | `utils.py` |
+| `PARSE_VIDEO_PORT` | Docker Compose 宿主端口映射 | 否 | 8000 | `docker-compose.yml` | `.env.example` |
+| `PARSE_VIDEO_DATA_DIR` | API Key JSON 存储目录 | 否 | `data`（容器内 `/app/data`，named volume 持久化） | `key_store.py` | `key_store.py` |
 
 ## 未确认事项
 

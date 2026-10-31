@@ -163,8 +163,14 @@ cython_debug/
 # test files
 test.py
 
+# runtime data (api_keys.json / credentials.json，含凭据，不可入库)
+data/
+
 # uv
 uv.lock
 
 # codex
 .codex
+
+# agent-local config
+.claude/

@@ -15,6 +15,7 @@ source_commit: dd55df3
 | 数据结构定义 | `parser/base.py:VideoInfo/VideoAuthor/ImgInfo` | 影响 API 响应格式和所有解析器 | 是否破坏前后端兼容性 | **高** | `parser/base.py:41-92` |
 | VideoSource 枚举 | `parser/base.py:VideoSource` | 影响路由映射和 API 参数 | 路由映射和解析器是否同步更新 | **高** | `parser/base.py:9-38` |
 | Web 路由和鉴权 | `web.py` | 影响所有 API 接口 | 鉴权逻辑是否正确 | **高** | `web.py` |
+| 登录凭据与会话 | `auth_store.py` | 所有页面/API 访问、凭据文件与内存会话 | 凭据优先级（文件→环境变量→默认值）与会话失效逻辑 | **高** | `auth_store.py` |
 | URL 提取工具 | `utils.py:extract_url()` | 影响 URL 解析入口 | 正则表达式是否覆盖所有场景 | 中 | `utils.py:4-10` |
 | CLI 命令注册 | `cli/__init__.py` | 影响 CLI 用户 | 命令参数是否向后兼容 | 低 | `cli/__init__.py` |
 | CI/CD 配置 | `.github/workflows/` | 影响自动化构建和部署 | 测试和构建流程是否正确 | 中 | `.github/workflows/` |
@@ -48,7 +49,7 @@ source_commit: dd55df3
 | 修改 VideoInfo 结构 | 所有解析器、API 响应格式 | 全部测试 | 02_project_map.md、03_core_flows.md |
 | 修改 video_source_info_mapping | 所有平台 URL 路由 | 路由匹配测试 | 02_project_map.md、03_core_flows.md |
 | 修改 BaseParser 接口 | 所有 26 个解析器 | 全部解析器 | 04_code_rules.md |
-| 修改 Basic Auth 逻辑 | 所有 API 接口访问 | 鉴权测试 | 03_core_flows.md、05_change_safety.md |
+| 修改登录鉴权逻辑（`require_login`/`auth_store`） | 所有页面与 API 访问、会话与凭据存储 | `tests/test_auth.py` + 鉴权测试 | 03_core_flows.md、02_project_map.md、05_change_safety.md |
 | 新增环境变量 | 部署配置 | 启动测试 | 02_project_map.md、06_build_run_deploy.md |
 | 修改部署方式 | Docker 镜像、CI/CD | Docker 构建 | 06_build_run_deploy.md |
 

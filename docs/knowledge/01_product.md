@@ -31,7 +31,7 @@ Python 短视频去水印解析服务，支持 25 个视频平台和 5 个图集
 | CLI 命令行 | 本地批量解析 | 已实现 | `parse-video-py parse` | P1 | `src/parse_video_py/cli/__init__.py:24` |
 | Web 界面 | 可视化操作 | 已实现 | `GET /` | P2 | `src/parse_video_py/web.py:64` |
 | MCP 集成 | AI 工具直接调用 | 已实现 | `GET /mcp` | P2 | `src/parse_video_py/web.py:26-27` |
-| Basic Auth | 保护接口安全 | 已实现（可选） | 环境变量控制 | P3 | `src/parse_video_py/web.py:32-57` |
+| 登录鉴权 | 保护接口安全 | 已实现（默认开启，默认账号 admin/admin123，设置页可修改；Basic Auth 兼容 API 客户端） | `GET/POST /login`、`/api/settings/credentials` | P2 | `src/parse_video_py/web.py`、`auth_store.py` |
 
 ## 商业模式
 
