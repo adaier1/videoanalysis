@@ -12,6 +12,13 @@ jobs:
       - name: Checkout Github Code
         uses: actions/checkout@v4
 
+      - name: Check Docker Hub secrets
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]; then
+            echo "::error::请先在仓库 Settings → Secrets and variables → Actions 中配置 DOCKERHUB_USERNAME 和 DOCKERHUB_PASSWORD"
+            exit 1
+          fi
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
