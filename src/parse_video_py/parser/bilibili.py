@@ -10,21 +10,17 @@ class BiliBili(BaseParser):
     哔哩哔哩
     """
 
-    # 添加Cookie可以爬取更高清的视频，记得要把下面请求里的Cookie的注释也去掉
-    # BILI_COOKIE = "_uuid=; buvid_fp=; buvid4=; SESSDATA=; bili_jct=; DedeUserID=;"
-
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
     )
 
+    REFERER = "https://www.bilibili.com/"
+
     def get_default_headers(self) -> dict:
-        headers = {
-            "User-Agent": self.USER_AGENT,
-            "Referer": "https://www.bilibili.com/",
-        }
-        # 如需爬取更高清的视频请取消这里的注释
-        # headers["Cookie"] = self.BILI_COOKIE
+        headers = super().get_default_headers()
+        headers["User-Agent"] = self.USER_AGENT
+        headers["Referer"] = self.REFERER
         return headers
 
     async def parse_share_url(self, share_url: str) -> VideoInfo:
@@ -43,12 +39,20 @@ class BiliBili(BaseParser):
         data = view_resp["data"]
         first_page_cid = data["pages"][0]["cid"]
 
-        # 第二步：获取播放链接
-        play_api_url = (
-            f"https://api.bilibili.com/x/player/playurl?"
-            f"otype=json&fnver=0&fnval=0&qn=80&bvid={video_id}"
-            f"&cid={first_page_cid}&platform=html5"
-        )
+        # 第二步：获取播放链接；已配置 Cookie 时请求更高清晰度（dash 最高可到 4K）
+        cookie = self.get_cookie_header()
+        if cookie:
+            play_api_url = (
+                f"https://api.bilibili.com/x/player/playurl?"
+                f"otype=json&fnver=0&fnval=16&fourk=1&qn=127&bvid={video_id}"
+                f"&cid={first_page_cid}&platform=html5"
+            )
+        else:
+            play_api_url = (
+                f"https://api.bilibili.com/x/player/playurl?"
+                f"otype=json&fnver=0&fnval=0&qn=80&bvid={video_id}"
+                f"&cid={first_page_cid}&platform=html5"
+            )
         play_resp_data = await self._send_bili_request(play_api_url)
 
         play_resp = json.loads(play_resp_data)
@@ -58,10 +62,16 @@ class BiliBili(BaseParser):
                 f"(code: {play_resp.get('code')})"
             )
 
-        # 提取视频URL
+        # 提取视频URL：优先 dash 最高清晰度（Cookie 解锁），回退 durl
         video_url = ""
         play_data = play_resp.get("data", {})
-        if play_data.get("durl") and len(play_data["durl"]) > 0:
+        dash_videos = play_data.get("dash", {}).get("video", [])
+        use_dash = False
+        if dash_videos:
+            best_video = max(dash_videos, key=lambda v: v.get("id", 0))
+            video_url = best_video.get("baseUrl", "")
+            use_dash = bool(video_url)
+        if not video_url and play_data.get("durl") and len(play_data["durl"]) > 0:
             video_url = play_data["durl"][0].get("url", "")
 
         if not video_url:
@@ -74,6 +84,8 @@ class BiliBili(BaseParser):
             cover_url=data.get("pic", ""),
             images=[],  # 空的图片列表
         )
+        if use_dash:
+            video_info.headers = {"Referer": self.REFERER}
 
         # 设置作者信息
         owner = data.get("owner", {})

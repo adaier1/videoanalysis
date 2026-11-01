@@ -39,6 +39,8 @@ confidence: high
 | `src/parse_video_py/utils.py` | URL 提取、query 参数解析工具 | 是 | `src/parse_video_py/utils.py` |
 | `src/parse_video_py/key_store.py` | API Key JSON 持久化存储（按用户隔离） | 是 | `src/parse_video_py/key_store.py` |
 | `src/parse_video_py/auth_store.py` | 登录凭据 JSON 持久化（默认 admin/admin123）+ 内存会话管理 | 是 | `src/parse_video_py/auth_store.py` |
+| `src/parse_video_py/event_log.py` | 系统事件日志（解析/登录/设置），JSONL 持久化 + 内存最近列表 | 是 | `src/parse_video_py/event_log.py` |
+| `src/parse_video_py/cookie_store.py` | 平台 Cookie JSON 持久化（按平台存储，解析时注入请求头） | 是 | `src/parse_video_py/cookie_store.py` |
 | `src/parse_video_py/templates/` | Jinja2 HTML 模板 | 否 | `src/parse_video_py/templates/` |
 | `tests/` | 测试用例 | 否 | `tests/` |
 | `docs/` | 文档（agents 配置等） | 否 | `docs/` |
@@ -66,6 +68,8 @@ confidence: high
 | 工具函数 | `utils.py` | URL 提取、query 参数解析、HTTP 客户端工厂 | web.py、cli/_parse.py、所有解析器 | **高** | `utils.py` |
 | API Key 存储 | `key_store.py` | JSON 文件读写、Key 生成/重置/校验（`secrets.compare_digest`） | web.py | 中 | `key_store.py` |
 | 登录凭据/会话存储 | `auth_store.py` | 凭据 JSON 读写、`secrets.compare_digest` 校验、内存会话创建/失效 | web.py | **高** | `auth_store.py` |
+| 系统事件日志 | `event_log.py` | 事件记录（解析/登录/设置）与内存最近列表、JSONL 持久化（上限 1000 条） | web.py | 中 | `event_log.py` |
+| 平台 Cookie 存储 | `cookie_store.py` | 按平台读写 Cookie JSON；`BaseParser.get_default_headers()` 经 `get_cookie_header()` 读取并注入 `Cookie` 请求头 | web.py、parser/base.py | 中 | `cookie_store.py` |
 | 26 个解析器 | `parser/*.py` | 各平台视频/图集解析 | parser/__init__.py 路由 | 中 | `parser/` |
 
 ## 外部依赖
@@ -86,6 +90,10 @@ confidence: high
 
 - `key_store.py` → `api_keys.json`：API Key 按用户（owner）隔离，重置后旧 Key 立即失效
 - `auth_store.py` → `credentials.json`：登录账号名称与密码（默认 admin/admin123，设置页修改）；会话为进程内存，重启后失效
+- `event_log.py` → `events.jsonl`：系统事件（解析/登录/设置）逐行 JSON 追加持久化（上限 1000 条，启动时载入）
+- `cookie_store.py` → `platform_cookies.json`：平台 Cookie 按平台（VideoSource 值）持久化，仅登录用户可通过设置页管理
+
+> 注意：`data/platform_cookies.json` 含账号 Cookie（敏感），发布到 GitHub 前必须核查排除（`.gitignore` 已排除 `data/`）。
 
 - 已检查路径：`src/`、`tests/`、`requirements.txt`、`pyproject.toml`
 - 证据：无 migration、无 ORM、无数据库连接配置；Key 与凭据存储为 JSON 文件
@@ -107,7 +115,11 @@ confidence: high
 | GET | `/api/shortcut/key` | 查看/自动生成当前登录用户 API Key（受登录保护） | `web.py:get_shortcut_key` | `web.py` |
 | POST | `/api/shortcut/key/reset` | 重置 API Key（旧 Key 立即失效，受登录保护） | `web.py:reset_shortcut_key` | `web.py` |
 | GET | `/api/settings/credentials` | 查看当前登录账号名称（受登录保护） | `web.py:get_credentials` | `web.py` |
-| POST | `/api/settings/credentials` | 修改账号名称与密码（受登录保护，成功后全部会话失效） | `web.py:set_credentials` | `web.py` |
+| POST | `/api/settings/credentials` | 修改账号名称与密码（受登录保护，成功后全部会话失效） | `web.py:set_credentials` |
+| GET | `/api/settings/cookies` | 查看已保存的平台 Cookie（受登录保护） | `web.py:get_cookies` |
+| POST | `/api/settings/cookies` | 保存/清除平台 Cookie（受登录保护，空 Cookie 即清除；来源必须是有效 VideoSource，长度限 4000） | `web.py:set_cookie` | `web.py` |
+| GET | `/api/events` | 系统事件日志（解析/登录/设置，受登录保护，倒序返回） | `web.py:get_events` | `tests/test_event_log.py` |
+| POST | `/api/events` | 记录前端本地校验失败（受登录保护，固定 parse/bad，消息限长 500） | `web.py:post_event` | `tests/test_event_log.py` |
 | MCP | `/mcp` | AI 工具集成 | FastApiMCP 自动注册 | `web.py:26-27,114` |
 
 ## 环境变量

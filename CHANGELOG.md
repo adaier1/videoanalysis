@@ -11,6 +11,15 @@
 - **凭据存储模块 `auth_store.py`**：凭据文件优先，环境变量 `PARSE_VIDEO_USERNAME`/`PARSE_VIDEO_PASSWORD` 仅作为文件缺失时的初始值；校验保持 `secrets.compare_digest()`
 - **Basic Auth 兼容**：API 客户端仍可用账号名称/密码作为 Basic 凭据；`/healthz` 不受登录影响
 - **新增测试** `tests/test_auth.py`（登录/会话/凭据修改/登出），既有测试同步加鉴权；`.gitignore` 排除含凭据的 `data/` 目录
+- **Cookie 管理（WebUI 顶部导航新视图）**：平台下拉 + Cookie 文本域，保存/清除经 `GET/POST /api/settings/cookies`（受登录保护，来源限 VideoSource、长度限 4000），持久化到 `data/platform_cookies.json`；解析时经 `BaseParser.get_default_headers()` 自动注入 `Cookie` 请求头（B 站/腾讯视频/微博等），可解锁 1080P/4K 并提升成功率；B 站已配 Cookie 时改走 `qn=127&fourk=1` dash 最高清晰度（回退 durl）；新增 `cookie_store.py` 与 `tests/test_cookie_store.py`
+
+- **Twitter/X GraphQL 登录态兜底（仅在已保存 Cookie 时启用）**：匿名 syndication 读不到媒体时（敏感内容、受保护、已删除），改用 `x.com/i/api/graphql/<queryId>/TweetResultByRestId` 读取 `legacy.entities.media`，Cookie 中的 `ct0` 作 `x-csrf-token`；未保存 Cookie 时仍报明确不可访问错误。queryId 为类常量 `GRAPHQL_QUERY_ID`，X 前端变化时需更新
+
+### Bug 修复
+
+- **Twitter/X 解析器改用 `get_default_headers()`**：此前手工构造请求头，设置页保存的 twitter Cookie 从未被发送；现在按统一规则注入（该 Cookie 对匿名 syndication 接口无解锁作用，受保护推文仍不可读）
+- **Twitter/X 媒体提取补强**：顶层 `video` 的 variants 兼容 `type`/`src` 命名（原实现只认 `content_type`/`url`，导致该路径永远取不到 mp4）；无码率时取最后一个 mp4；`photos` 数组与 `media_details` 命名作为兜底；引用推文 `quoted_tweet` 的媒体作为兜底
+- **错误信息更明确**：接口返回 JSON 错误或非 JSON（风控、已删除、受保护）时给出对应提示，不再统一报"没有找到视频或图片"；新增 `tests/test_twitter.py` 媒体提取用例
 
 ## [v0.0.3] - 2026-04-19
 

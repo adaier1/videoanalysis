@@ -4,13 +4,15 @@ from urllib.parse import parse_qs, urlparse
 
 import httpx
 
-URL_REG = re.compile(r"http[s]?:\/\/[\w.-]+[\w\/-]*[\w.-]*\??[\w=&:\-\+\%.]*[/]*")
+URL_REG = re.compile(r"https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+")
 
 
 def extract_url(text: str) -> str | None:
-    """从文本中提取第一个匹配的 URL"""
+    """从文本中提取第一个匹配的 URL（支持分享文本，遇到中文/空白即停止）"""
     match = URL_REG.search(text)
-    return match.group() if match else None
+    if not match:
+        return None
+    return match.group().rstrip(".,;:!?,;!?。，；！？")
 
 
 def get_val_from_url_by_query_key(url: str, query_key: str) -> str:

@@ -27,6 +27,7 @@ source_commit: dd55df3
 | 测试用例 | `tests/test_<模块名>.py` | `tests/test_utils.py` | src 目录内 |
 | Web 模板 | `src/parse_video_py/templates/` | `templates/index.html` | 项目根目录 |
 | API Key 持久化 | `src/parse_video_py/key_store.py` | `key_store.py` | 路由内内联实现 |
+| 平台 Cookie 持久化 | `src/parse_video_py/cookie_store.py` | `key_store.py` | 路由内内联实现 |
 | 登录凭据/会话持久化 | `src/parse_video_py/auth_store.py` | `auth_store.py` | 路由内内联实现 |
 | Web 模板（登录页） | `src/parse_video_py/templates/login.html` | `templates/` | 项目根目录 |
 | 类型定义/枚举 | `parser/base.py` | `parser/base.py:VideoSource` | 分散到各解析器 |
@@ -61,7 +62,7 @@ source_commit: dd55df3
 ## 前端规则
 
 项目有一个单页面 Web 界面（`templates/index.html`），用于展示解析功能。未登录时重定向到登录页（`templates/login.html`，与主页面同一设计令牌，主题跟随 localStorage `pv_theme`）。
-顶部导航栏为分段控制器（Segmented Control，圆角胶囊 + 浅灰底 + 细边框），位于品牌图标下方并与之对齐，含两个视图：主页（解析）与设置（登录账号：显示当前账号 chip，可修改账号名称与密码并退出登录——保存后全部会话失效需重新登录；主题；iOS 快捷指令 API 卡片：展示含 Key 的完整调用地址 `origin/api/shortcut/parse?key=<key>&url=`，复制与重置按钮同一行），视图切换通过 `setView()` 控制 `#viewHome`/`#viewSettings` 的显隐；主题存 localStorage（`auto`/`light`/`dark`）。
+顶部导航栏为分段控制器（Segmented Control，圆角胶囊 + 浅灰底 + 细边框），位于品牌图标下方并与之对齐，含四个视图：主页（解析）、Cookie 管理（平台下拉 + Cookie 字符串文本域，保存/清除经 `GET/POST /api/settings/cookies`；B 站、腾讯视频、微博排在平台列表最前；已保存平台列表与计数显示；进入视图时加载）、日志（系统事件列表：时间/类型/状态/消息，来自 `GET /api/events`，进入视图时加载并每 10 秒自动刷新；解析失败在日志中显示失败原因，前端本地校验失败通过 `POST /api/events` 以「前端校验失败：…」记入）、设置（登录账号：显示当前账号 chip，可修改账号名称与密码并退出登录——保存后全部会话失效需重新登录；主题；iOS 快捷指令 API 卡片：展示含 Key 的完整调用地址 `origin/api/shortcut/parse?key=<key>&url=`，复制与重置按钮同一行），视图切换通过 `setView()` 控制 `#viewHome`/`#viewLogs`/`#viewSettings` 的显隐；主题存 localStorage（`auto`/`light`/`dark`）。
 页面请求依赖登录会话 Cookie（同源 fetch），API 返回 401 时前端跳转 `/login`。凭据不再存 localStorage。
 
 ## 后端规则
@@ -77,6 +78,7 @@ source_commit: dd55df3
   3. 实现 `async def parse_video_id(self, video_id: str) -> VideoInfo`
   4. 使用 `httpx.AsyncClient(follow_redirects=True)` 发请求
   5. UA 伪装：`fake_useragent.UserAgent(os="iOS").random`（桌面端解析器用 `os="windows"`）
+  6. 请求头通过 `self.get_default_headers()` 获取（含 UA 与设置页保存的平台 Cookie），解析器实例由路由入口注入 `source`；需要附加头时在 `get_default_headers()` 结果上 update，不要绕过 Cookie 注入
 
 ## 数据库规则
 

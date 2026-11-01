@@ -121,6 +121,16 @@ a{color:var(--accent);text-decoration:none}
 .h-item-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
 .h-item-actions{display:flex;gap:6px;flex:none}
 .empty{border:1px dashed var(--line-strong);border-radius:var(--radius-s);padding:22px 14px;text-align:center;color:var(--ink-3);font-size:13.5px}
+/* ===================== 日志 ===================== */
+.log-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-top:1px solid var(--line)}
+.log-item:first-child{border-top:0}
+.log-dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--ink-3)}
+.log-dot.ok{background:var(--ok)}
+.log-dot.bad{background:var(--bad)}
+.log-dot.warn{background:var(--warn)}
+.log-time{flex:none;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.log-type{flex:none;font-size:12px;font-weight:600;color:var(--accent);background:var(--tint);border-radius:999px;padding:3px 10px}
+.log-msg{flex:1;min-width:0;font-size:13.5px;overflow-wrap:anywhere}
 /* ===================== 弹窗与提示 ===================== */
 .modal-mask{position:fixed;inset:0;background:rgba(16,18,20,.46);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;backdrop-filter:blur(3px)}
 .modal{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
@@ -129,6 +139,7 @@ a{color:var(--accent);text-decoration:none}
 .form-field{margin-bottom:13px}
 .form-field label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
 .form-field .text-input{height:44px}
+.form-field textarea.text-input{height:auto;min-height:150px;padding:12px 14px;line-height:1.55;resize:vertical}
 .modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);display:flex;align-items:center;gap:9px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--radius-s);box-shadow:var(--shadow);padding:11px 16px;font-size:13.5px;z-index:60;max-width:min(560px,calc(100vw - 32px));animation:rise .3s ease both}
 .toast i{width:8px;height:8px;border-radius:50%;flex:none}
@@ -164,6 +175,14 @@ a{color:var(--accent);text-decoration:none}
       <button class="seg" role="tab" data-view="home" aria-selected="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
         主页
+      </button>
+      <button class="seg" role="tab" data-view="cookies" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 3 3 0 0 1-3-3 3 3 0 0 1-3-3 3 3 0 0 1-3-3z"/><circle cx="8.5" cy="11" r="1"/><circle cx="12.5" cy="15.5" r="1"/><circle cx="15.5" cy="12" r="1"/><circle cx="9.5" cy="16.5" r="1"/></svg>
+        Cookie 管理
+      </button>
+      <button class="seg" role="tab" data-view="logs" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h1.5M3 12h1.5M3 18h1.5"/></svg>
+        日志
       </button>
       <button class="seg" role="tab" data-view="settings" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
@@ -237,6 +256,42 @@ a{color:var(--accent);text-decoration:none}
       <ul class="history-list" id="historyList"></ul>
       <div class="empty" id="historyEmpty">还没有解析记录</div>
     </section>
+    </div>
+
+    <div id="viewCookies" hidden>
+      <section class="panel reveal">
+        <div class="panel-head"><h3>Cookie 管理</h3><span class="chip" id="cookieSavedCount">未保存</span></div>
+        <p class="hint" style="margin-bottom:14px">从浏览器复制平台的 Cookie 字符串粘贴到下方并保存。解析对应平台时会自动携带 Cookie，可解锁 B 站等平台 1080P/4K 高清分辨率并提升解析成功率。Cookie 仅保存在服务端数据目录（data/platform_cookies.json），不会出现在前端存储中。</p>
+        <div class="form-field">
+          <label for="cookieSource">平台</label>
+          <select class="select-input" id="cookieSource" style="flex:1"></select>
+        </div>
+        <div class="form-field">
+          <label for="cookieValue">Cookie 字符串</label>
+          <textarea class="text-input mono" id="cookieValue" rows="6" spellcheck="false"
+                    placeholder="整串 Cookie，例如 SESSDATA=…; bili_jct=…; DedeUserID=…"></textarea>
+        </div>
+        <div class="parse-actions">
+          <button class="primary-btn" id="btnSaveCookie" style="min-width:96px">保存</button>
+          <button class="mini-btn" id="btnClearCookie">清除该平台</button>
+        </div>
+      </section>
+      <section class="panel reveal">
+        <div class="panel-head"><h3>已保存的平台</h3></div>
+        <ul class="url-list" id="cookieList"></ul>
+        <div class="empty" id="cookieEmpty">还没有保存任何平台的 Cookie</div>
+      </section>
+    </div>
+
+    <div id="viewLogs" hidden>
+      <section class="panel reveal">
+        <div class="panel-head">
+          <h3>系统日志 <span id="logCount" class="mono" style="font-size:12px;color:var(--ink-3)"></span></h3>
+          <button class="mini-btn" id="btnRefreshLogs">刷新</button>
+        </div>
+        <ul class="history-list" id="logList"></ul>
+        <div class="empty" id="logEmpty">暂无日志记录</div>
+      </section>
     </div>
 
     <div id="viewSettings" hidden>
@@ -314,7 +369,7 @@ var SOURCES=[
   {v:'Twitter',n:'Twitter/X',d:['twitter.com','x.com','t.co','mobile.twitter.com']}
 ];
 
-var state={mode:'share',view:'home',parsing:false,lastData:null};
+var state={mode:'share',view:'home',parsing:false,lastData:null,cookies:{}};
 function $(id){ return document.getElementById(id); }
 function esc(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
 function handle401(){
@@ -420,13 +475,15 @@ async function runParse(){
   var path,params,label;
   if(state.mode==='share'){
     var raw=$('shareInput').value.trim();
-    if(!raw){ showErr('请先粘贴分享链接。'); return; }
-    if(!/^https?:\/\//i.test(raw)){ showErr('链接需要以 http:// 或 https:// 开头。'); return; }
-    path='/video/share/url/parse'; params={url:raw}; label=raw;
+    if(!raw){ showErr('请先粘贴分享链接。'); logFailure('未输入分享内容'); return; }
+    var m=raw.match(/https?:\/\/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+/);
+    if(!m){ showErr('未检测到有效的分享链接（需要包含 http:// 或 https:// 开头的链接）。'); logFailure('未检测到有效链接：'+raw.slice(0,300)); return; }
+    var url=m[0].replace(/[.,;:!?,;!?。，；！？]+$/,'');
+    path='/video/share/url/parse'; params={url:url}; label=raw;
   }else{
     var src=$('sourceSelect').value;
     var vid=$('idInput').value.trim();
-    if(!vid){ showErr('请输入视频 ID。'); return; }
+    if(!vid){ showErr('请输入视频 ID。'); logFailure('未输入视频 ID'); return; }
     path='/video/id/parse'; params={source:src,video_id:vid}; label=src+' / '+vid;
   }
   setParsing(true);
@@ -555,6 +612,99 @@ function renderHistory(){
   });
 }
 
+/* ===================== 日志 ===================== */
+var LOG_TYPES={parse:'解析',auth:'登录',settings:'设置'};
+async function logFailure(msg){
+  try{ await apiPost('/api/events',{message:'前端校验失败：'+msg}); }catch(e){}
+  if(state.view==='logs') loadLogs();
+}
+async function loadLogs(){
+  try{
+    var d=await apiCall('/api/events',{limit:200});
+    renderLogs(d.events||[]);
+  }catch(e){ toast(e.msg,'bad'); }
+}
+function renderLogs(events){
+  var list=$('logList');
+  list.innerHTML='';
+  $('logCount').textContent=events.length?('('+events.length+')'):'';
+  $('logEmpty').hidden=events.length>0;
+  events.forEach(function(ev){
+    var li=document.createElement('li'); li.className='log-item';
+    var dot=document.createElement('span'); dot.className='log-dot '+(ev.status||'');
+    var time=document.createElement('span'); time.className='log-time';
+    time.textContent=new Date(ev.t).toLocaleString();
+    var type=document.createElement('span'); type.className='log-type';
+    type.textContent=LOG_TYPES[ev.type]||ev.type||'事件';
+    var msg=document.createElement('span'); msg.className='log-msg';
+    msg.textContent=ev.message||'';
+    li.appendChild(dot); li.appendChild(time); li.appendChild(type); li.appendChild(msg);
+    list.appendChild(li);
+  });
+}
+
+/* ===================== Cookie 管理 ===================== */
+var COOKIE_PRI=['BiliBili','QQVideo','WeiBo'];
+function cookieSources(){
+  var first=[],rest=[];
+  SOURCES.forEach(function(s){ (COOKIE_PRI.indexOf(s.v)!==-1?first:rest).push(s); });
+  first.sort(function(a,b){ return COOKIE_PRI.indexOf(a.v)-COOKIE_PRI.indexOf(b.v); });
+  return first.concat(rest);
+}
+function sourceName(v){
+  for(var i=0;i<SOURCES.length;i++){ if(SOURCES[i].v===v) return SOURCES[i].n; }
+  return v;
+}
+function renderCookieSelect(){
+  var sel=$('cookieSource');
+  cookieSources().forEach(function(s){
+    var o=document.createElement('option');
+    o.value=s.v; o.textContent=s.n;
+    sel.appendChild(o);
+  });
+}
+async function loadCookies(){
+  try{
+    var d=await apiCall('/api/settings/cookies',{});
+    state.cookies=d.cookies||{};
+    renderCookiePanel();
+  }catch(e){ toast(e.msg,'bad'); }
+}
+function renderCookiePanel(){
+  var keys=Object.keys(state.cookies);
+  $('cookieSavedCount').textContent=keys.length?('已保存 '+keys.length+' 个平台'):'未保存';
+  var list=$('cookieList');
+  list.innerHTML='';
+  $('cookieEmpty').hidden=keys.length>0;
+  keys.forEach(function(v){
+    var li=document.createElement('li'); li.className='history-item';
+    var main=document.createElement('div'); main.className='h-item-main';
+    var t=document.createElement('div'); t.className='h-item-title'; t.textContent=sourceName(v);
+    var m=document.createElement('div'); m.className='h-item-meta';
+    m.textContent='长度 '+state.cookies[v].length+' 字符';
+    main.appendChild(t); main.appendChild(m);
+    var acts=document.createElement('div'); acts.className='h-item-actions';
+    var loadBtn=document.createElement('button'); loadBtn.className='mini-btn'; loadBtn.textContent='载入';
+    loadBtn.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      $('cookieSource').value=v;
+      $('cookieValue').value=state.cookies[v];
+    });
+    acts.appendChild(loadBtn);
+    li.appendChild(main); li.appendChild(acts);
+    list.appendChild(li);
+  });
+  $('cookieValue').value=state.cookies[$('cookieSource').value]||'';
+}
+async function saveCookie(){
+  var src=$('cookieSource').value;
+  var val=$('cookieValue').value.trim();
+  try{ await apiPost('/api/settings/cookies',{source:src,cookie:val}); }
+  catch(e){ toast(e.msg,'bad'); return; }
+  await loadCookies();
+  toast(val?'Cookie 已保存，解析时将自动携带':'Cookie 已清除','ok');
+}
+
 /* ===================== 模式与主题 ===================== */
 function setMode(m){
   state.mode=m;
@@ -571,8 +721,12 @@ function setView(v){
     b.setAttribute('aria-selected',b.getAttribute('data-view')===v?'true':'false');
   });
   $('viewHome').hidden=v!=='home';
+  $('viewCookies').hidden=v!=='cookies';
+  $('viewLogs').hidden=v!=='logs';
   $('viewSettings').hidden=v!=='settings';
   if(v==='settings') loadShortcutKey();
+  if(v==='logs') loadLogs();
+  if(v==='cookies') loadCookies();
 }
 function currentTheme(){
   var s=localStorage.getItem(LS_THEME);
@@ -623,6 +777,20 @@ function bindEvents(){
     try{ localStorage.setItem(LS_HIST,'[]'); }catch(e){}
     renderHistory(); toast('历史已清空','ok');
   });
+  $('btnRefreshLogs').addEventListener('click',loadLogs);
+  $('btnSaveCookie').addEventListener('click',saveCookie);
+  $('btnClearCookie').addEventListener('click',async function(){
+    var src=$('cookieSource').value;
+    if(!state.cookies[src]){ toast('该平台还没有保存 Cookie','bad'); return; }
+    try{ await apiPost('/api/settings/cookies',{source:src,cookie:''}); }
+    catch(e){ toast(e.msg,'bad'); return; }
+    await loadCookies();
+    toast('Cookie 已清除','ok');
+  });
+  $('cookieSource').addEventListener('change',function(){
+    $('cookieValue').value=state.cookies[$('cookieSource').value]||'';
+  });
+  setInterval(function(){ if(state.view==='logs' && !document.hidden) loadLogs(); },10000);
   $('btnSaveSettings').addEventListener('click',saveCredentials);
   $('btnLogout').addEventListener('click',function(){
     fetch('/logout',{method:'POST',credentials:'same-origin'}).catch(function(){});
@@ -674,6 +842,7 @@ function init(){
     sel.appendChild(o);
   });
 
+  renderCookieSelect();
   bindEvents();
   renderHistory();
   loadCredentials();

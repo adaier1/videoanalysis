@@ -1,9 +1,11 @@
 import dataclasses
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import fake_useragent
+
+from .. import cookie_store
 
 
 class VideoSource(Enum):
@@ -96,11 +98,24 @@ class VideoInfo:
 
 
 class BaseParser(ABC):
+    def __init__(self, source: Optional[VideoSource] = None) -> None:
+        self.source = source
+
     @staticmethod
-    def get_default_headers() -> Dict[str, str]:
-        return {
-            "User-Agent": fake_useragent.UserAgent(os="iOS").random,
-        }
+    def random_user_agent() -> str:
+        return fake_useragent.UserAgent(os="iOS").random
+
+    def get_cookie_header(self) -> str:
+        if self.source is None:
+            return ""
+        return cookie_store.get_cookie(self.source.value)
+
+    def get_default_headers(self) -> Dict[str, str]:
+        headers = {"User-Agent": self.random_user_agent()}
+        cookie = self.get_cookie_header()
+        if cookie:
+            headers["Cookie"] = cookie
+        return headers
 
     @abstractmethod
     async def parse_share_url(self, share_url: str) -> VideoInfo:

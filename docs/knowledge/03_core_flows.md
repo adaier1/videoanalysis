@@ -31,9 +31,13 @@ confidence: high
 5. 调用 `parser.parse_share_url(share_url)` 获取 `VideoInfo`
 6. 各平台解析器内部流程：
    - 解析 URL 域名和路径，提取视频 ID
-   - 构造平台 API 请求（带 UA 伪装）
+   - 构造平台 API 请求（带 UA 伪装；若该平台在设置页保存了 Cookie，`BaseParser.get_default_headers()` 自动注入 `Cookie` 请求头）
    - 解析响应（JSON/HTML），提取视频/图集信息
    - 返回标准 `VideoInfo` 对象
+
+   Cookie 解锁清晰度：B 站在已配置 Cookie 时以 `qn=127&fourk=1&fnval=16` 请求 playurl，优先选择 dash 中最高清晰度（最高 4K，响应需带 Referer），回退 durl；未配置 Cookie 时保持原 `qn=80` durl 行为。
+
+   Twitter/X 登录态兜底：默认走匿名 syndication 接口（`cdn.syndication.twimg.com/tweet-result`，token 由 tweet ID 计算）。该接口读不到敏感内容、受保护或已删除的推文（返回 `TweetTombstone`/`TweetUnavailable`）。仅当设置页保存了 twitter Cookie 时，解析器才走 `x.com/i/api/graphql/<queryId>/TweetResultByRestId` 登录态接口兜底，需要 Cookie 中的 `auth_token` 与 `ct0`（作 `x-csrf-token`）；queryId 会随 X 前端发布变化。未保存 Cookie 时直接给出不可访问的明确错误。
 7. Web/API 模式：`dataclasses.asdict(video_info)` 转为 JSON 返回
 
 ### 关键代码
@@ -59,7 +63,8 @@ confidence: high
 |---|---|---|
 | `PARSE_VIDEO_USERNAME` | 登录账号初始值（凭据文件缺失时生效） | `auth_store.py:load_credentials()` |
 | `PARSE_VIDEO_PASSWORD` | 登录密码初始值（凭据文件缺失时生效） | `auth_store.py:load_credentials()` |
-| `fake_useragent` | 随机 UA 伪装 | `parser/base.py:99` |
+| `fake_useragent` | 随机 UA 伪装 | `parser/base.py:random_user_agent()` |
+| `platform_cookies.json`（设置页保存） | 平台 Cookie，解析时注入 `Cookie` 请求头 | `cookie_store.py`、`parser/base.py:get_cookie_header()` |
 
 ### 异常处理
 

@@ -66,3 +66,28 @@ class TestExtractUrl:
         """带查询参数的 URL"""
         url = "https://v.qq.com/x/page/l3502vppd13.html?ptag=v_qq_com"
         assert extract_url(url) == url
+
+    def test_extract_from_share_text(self):
+        """从抖音式分享文本中只提取纯链接部分"""
+        text = (
+            "7.48 复制打开抖音，看看【作者】的作品 https://v.douyin.com/iM2Lz4/ "
+            "复制粘贴复制$ 链接打开"
+        )
+        assert extract_url(text) == "https://v.douyin.com/iM2Lz4/"
+
+    def test_url_adjacent_to_chinese(self):
+        """URL 紧跟中文时不吞掉中文文本"""
+        assert extract_url("看看这个https://tv.sohu.com/v/abc.html好看") == (
+            "https://tv.sohu.com/v/abc.html"
+        )
+
+    def test_trailing_punctuation_stripped(self):
+        """末尾标点不属于链接"""
+        assert (
+            extract_url("分享 https://v.douyin.com/abc/。")
+            == "https://v.douyin.com/abc/"
+        )
+
+    def test_no_url_returns_none(self):
+        """无链接时返回 None"""
+        assert extract_url("没有链接") is None

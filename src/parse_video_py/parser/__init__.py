@@ -168,7 +168,7 @@ async def parse_video_share_url(share_url: str) -> VideoInfo:
     if not url_parser:
         raise ValueError(f"source {source} has no video parser")
 
-    _obj = url_parser()
+    _obj = url_parser(source)
     video_info = await _obj.parse_share_url(share_url)
 
     return video_info
@@ -188,7 +188,7 @@ async def parse_video_id(source: VideoSource, video_id: str) -> VideoInfo:
     if not id_parser:
         raise ValueError(f"source {source} has no video parser")
 
-    _obj = id_parser()
+    _obj = id_parser(source)
     video_info = await _obj.parse_video_id(video_id)
 
     return video_info
