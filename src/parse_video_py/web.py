@@ -341,7 +341,7 @@ class CookieRequest(BaseModel):
     cookie: str
 
 
-MAX_COOKIE_LEN = 4000
+MAX_COOKIE_LEN = 8000
 VALID_COOKIE_SOURCES = {source.value for source in VideoSource}
 
 

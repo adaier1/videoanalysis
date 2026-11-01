@@ -59,7 +59,15 @@ def test_post_cookie_saves_and_rejects_invalid():
     assert response.json()["code"] == 400
     response = client.post(
         "/api/settings/cookies",
-        json={"source": "weibo", "cookie": "a" * 4001},
+        json={"source": "douyin", "cookie": "a" * 4200},
+        auth=AUTH,
+    )
+    assert response.json()["code"] == 200
+    assert len(cookie_store.get_cookie("douyin")) == 4200
+
+    response = client.post(
+        "/api/settings/cookies",
+        json={"source": "weibo", "cookie": "a" * 8001},
         auth=AUTH,
     )
     assert response.json()["code"] == 400

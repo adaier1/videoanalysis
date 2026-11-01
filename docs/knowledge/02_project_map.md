@@ -117,7 +117,7 @@ confidence: high
 | GET | `/api/settings/credentials` | 查看当前登录账号名称（受登录保护） | `web.py:get_credentials` | `web.py` |
 | POST | `/api/settings/credentials` | 修改账号名称与密码（受登录保护，成功后全部会话失效） | `web.py:set_credentials` |
 | GET | `/api/settings/cookies` | 查看已保存的平台 Cookie（受登录保护） | `web.py:get_cookies` |
-| POST | `/api/settings/cookies` | 保存/清除平台 Cookie（受登录保护，空 Cookie 即清除；来源必须是有效 VideoSource，长度限 4000） | `web.py:set_cookie` | `web.py` |
+| POST | `/api/settings/cookies` | 保存/清除平台 Cookie（受登录保护，空 Cookie 即清除；来源必须是有效 VideoSource，长度限 8000） | `web.py:set_cookie` | `web.py` |
 | GET | `/api/events` | 系统事件日志（解析/登录/设置，受登录保护，倒序返回） | `web.py:get_events` | `tests/test_event_log.py` |
 | POST | `/api/events` | 记录前端本地校验失败（受登录保护，固定 parse/bad，消息限长 500） | `web.py:post_event` | `tests/test_event_log.py` |
 | MCP | `/mcp` | AI 工具集成 | FastApiMCP 自动注册 | `web.py:26-27,114` |
