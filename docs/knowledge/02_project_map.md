@@ -111,7 +111,7 @@ confidence: high
 | GET | `/healthz` | 容器健康检查（不受登录影响） | `web.py:healthz` | `web.py` |
 | GET | `/video/share/url/parse` | 分享链接解析 | `web.py:share_url_parse` | `web.py:75` |
 | GET | `/video/id/parse` | 视频 ID 解析 | `web.py:video_id_parse` | `web.py:98` |
-| GET/POST | `/api/shortcut/parse` | iOS 快捷指令解析（GET `?key&url` 或 POST `{key,url}`，返回 download_url+headers，仅 Key 鉴权） | `web.py:_shortcut_parse`（`shortcut_parse`/`shortcut_parse_get`） | `tests/test_shortcut_api.py` |
+| GET/POST | `/api/shortcut/parse` | iOS 快捷指令解析（GET `?key&url` 或 POST `{key,url}`，返回 download_url+headers+media_type，视频与图集均支持（无视频时回退首图），仅 Key 鉴权） | `web.py:_shortcut_parse`（`shortcut_parse`/`shortcut_parse_get`） | `tests/test_shortcut_api.py` |
 | GET | `/api/shortcut/key` | 查看/自动生成当前登录用户 API Key（受登录保护） | `web.py:get_shortcut_key` | `web.py` |
 | POST | `/api/shortcut/key/reset` | 重置 API Key（旧 Key 立即失效，受登录保护） | `web.py:reset_shortcut_key` | `web.py` |
 | GET | `/api/settings/credentials` | 查看当前登录账号名称（受登录保护） | `web.py:get_credentials` | `web.py` |

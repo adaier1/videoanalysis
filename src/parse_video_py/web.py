@@ -204,12 +204,13 @@ class ShortcutParseRequest(BaseModel):
 
 
 # iOS 快捷指令标准提示文案：快捷指令在 success=false 时直接用 message 弹窗（Alert）。
-# 客户端场景（无法连接服务器、下载失败、服务器任务失败）由快捷指令自身的失败分支
-# 弹出同类文案，见 docs/knowledge/03_core_flows.md 的映射表。
+# 文案与媒体类型无关（视频/图集共用），客户端场景（无法连接服务器、下载失败、
+# 服务器任务失败）由快捷指令自身的失败分支弹出同类文案，
+# 见 docs/knowledge/03_core_flows.md 的映射表。
 SHORTCUT_ALERT_MESSAGES = {
-    "success": "已获取视频下载地址",
-    "invalid_url": "视频链接无效，请检查分享内容",
-    "parse_failed": "视频解析失败，可能暂不支持该平台",
+    "success": "已获取下载地址",
+    "invalid_url": "链接无效，请检查分享内容",
+    "parse_failed": "解析失败，可能暂不支持该平台",
     "invalid_key": "API Key 无效，请重新配置",
 }
 
@@ -245,11 +246,13 @@ async def _shortcut_parse(key: str, url: str) -> dict:
         event_log.record("parse", "bad", f"快捷指令解析失败：{err}", owner)
         return _shortcut_error(400, "parse_failed", str(err))
 
-    if not video_info.video_url:
+    images = [img for img in (video_info.images or []) if img.url]
+    download_url = video_info.video_url or (images[0].url if images else "")
+    if not download_url:
         event_log.record(
-            "parse", "bad", f"快捷指令解析失败：无可用视频地址：{share_url}", owner
+            "parse", "bad", f"快捷指令解析失败：无可用媒体地址：{share_url}", owner
         )
-        return _shortcut_error(400, "parse_failed", "解析成功但没有可用的视频下载地址")
+        return _shortcut_error(400, "parse_failed", "解析成功但没有可用的下载地址")
 
     event_log.record("parse", "ok", f"快捷指令解析成功：{share_url}", owner)
 
@@ -260,11 +263,16 @@ async def _shortcut_parse(key: str, url: str) -> dict:
         "code": 200,
         "success": True,
         "error_type": "success",
+        "media_type": "video" if video_info.video_url else "image",
         "title": video_info.title,
-        "download_url": video_info.video_url,
+        "download_url": download_url,
         "message": SHORTCUT_ALERT_MESSAGES["success"],
         "headers": headers,
     }
+    if images:
+        response["images"] = [
+            {"url": img.url, "live_photo_url": img.live_photo_url} for img in images
+        ]
     if video_info.cover_url:
         response["cover_url"] = video_info.cover_url
     return response

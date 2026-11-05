@@ -213,8 +213,8 @@ confidence: high
 1. `key_store.find_owner()` 用 `secrets.compare_digest()` 校验 Key，无效返回 401
 2. `utils.py:extract_url()` 校验分享链接合法性
 3. 复用 `parse_video_share_url()`（不重复实现解析，不执行服务端下载，不写 NAS）
-4. 无 `video_url` 时返回 400 明确错误；解析异常（超时、平台变更）返回 400 + 错误信息
-5. 响应核心字段：`code/success/error_type/title/download_url/message/headers`；`headers` 取 `VideoInfo.headers`（解析器按需填充防盗链/临时 Token），为空时回退 iOS UA；`cover_url` 有值才返回
+4. 无 `video_url` 且无 `images` 时返回 400 明确错误；解析异常（超时、平台变更）返回 400 + 错误信息
+5. 响应核心字段：`code/success/error_type/media_type/title/download_url/message/headers`；`media_type` 为 `video`（有 `video_url`）或 `image`（仅图集）；`download_url` 取 `video_url`，纯图集时回退首张 `images[0].url`；`headers` 取 `VideoInfo.headers`（解析器按需填充防盗链/临时 Token），为空时回退 iOS UA；`images`（`url` + `live_photo_url`）与 `cover_url` 有值才返回
 6. Key 按 owner（登录账号名称，如默认 `admin`）隔离，首次访问自动生成，持久化到 `api_keys.json`
 7. `message` 是快捷指令标准弹窗文案（`web.py:SHORTCUT_ALERT_MESSAGES`），失败时 `detail` 携带原始异常供调试；快捷指令在 `success=false` 时用 Alert 弹 `message`，不得静默结束
 
@@ -222,20 +222,23 @@ confidence: high
 
 | error_type / 场景 | 来源 | message（iPhone Alert 文案） |
 |---|---|---|
-| success | 服务端 | 已获取视频下载地址 |
-| invalid_url（400） | 服务端 | 视频链接无效，请检查分享内容 |
-| parse_failed（400） | 服务端 | 视频解析失败，可能暂不支持该平台 |
+| success | 服务端 | 已获取下载地址 |
+| invalid_url（400） | 服务端 | 链接无效，请检查分享内容 |
+| parse_failed（400） | 服务端 | 解析失败，可能暂不支持该平台 |
 | invalid_key（401） | 服务端 | API Key 无效，请重新配置 |
 | 无法连接解析服务器 | 快捷指令"获取 URL 内容"失败分支 | 无法连接解析服务器，请检查网络 |
 | 下载失败 | 快捷指令存储文件失败分支 | 视频下载失败，请检查网络或稍后重试 |
 | 服务器任务失败（远程保存） | 服务器任务接口（如启用） | 服务器下载失败，请查看任务详情 |
-| 本地保存成功 | 快捷指令 | 视频已保存到照片相簿 |
+| 本地保存成功（视频） | 快捷指令 | 视频已保存到照片相簿 |
+| 本地保存成功（图片） | 快捷指令 | 图片已保存到照片相簿 |
 | 远程保存提交成功 | 快捷指令 | 视频已提交服务器下载 |
 
 ### 修改风险
 
 - Key 校验必须保持 `secrets.compare_digest()`
 - `VideoInfo.headers` 为新增可选字段（默认空 dict），影响 API 响应格式
+- 响应新增 `media_type` 与可选 `images` 数组、`download_url` 语义变为「优先视频、否则首图」，改文案或字段需同步快捷指令分支与 `tests/test_shortcut_api.py`
+- 纯图集多图需客户端遍历 `images` 逐张保存，`download_url` 只代表首张（快捷指令单次存储文件）
 - `/api/shortcut/parse` 仅 Key 鉴权、不走登录鉴权；Key 管理路由受登录保护
 
 ### 未确认事项

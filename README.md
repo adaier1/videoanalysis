@@ -86,7 +86,7 @@ curl -u 'admin:your_password' 'http://127.0.0.1:8000/video/share/url/parse?url=�
 
 > 除视频地址外，其他字段可能为空。
 
-另提供 `/api/shortcut/parse`（带 API Key 的快捷解析）与 Key 管理接口。
+另提供 `/api/shortcut/parse`（带 API Key 的快捷解析，视频与图集均支持，响应含 `media_type`/`download_url`/`images`）与 Key 管理接口。
 
 ## MCP 支持
 
